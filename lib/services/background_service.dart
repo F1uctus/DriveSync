@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:workmanager/workmanager.dart';
 
 const String backgroundSyncTask = 'backgroundSyncTask';
@@ -12,16 +13,16 @@ void callbackDispatcher() {
           // Full sync operation
           // Note: In production, this would call the sync service
           // For now, just log that background sync was triggered
-          print('Background sync task executed');
+          developer.log('Background sync task executed', name: 'BackgroundService');
           break;
         case backgroundFetchTask:
           // Quick check for changes
-          print('Background fetch task executed');
+          developer.log('Background fetch task executed', name: 'BackgroundService');
           break;
       }
       return Future.value(true);
     } catch (e) {
-      print('Background task error: $e');
+      developer.log('Background task error: $e', name: 'BackgroundService');
       return Future.value(false);
     }
   });

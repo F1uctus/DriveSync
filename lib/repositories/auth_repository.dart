@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis_auth/googleapis_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -59,7 +60,7 @@ class AuthRepository {
 
       return true;
     } catch (e) {
-      print('Sign in error: $e');
+      developer.log('Sign in error: $e', name: 'AuthRepository');
       return false;
     }
   }

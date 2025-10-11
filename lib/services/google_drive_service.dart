@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis_auth/auth_io.dart';
-import 'package:http/http.dart' as http;
 
 class DriveFile {
   final String id;
@@ -40,10 +39,8 @@ class DriveFile {
 
 class GoogleDriveService {
   drive.DriveApi? _driveApi;
-  AuthClient? _authClient;
 
   Future<void> initialize(AuthClient authClient) async {
-    _authClient = authClient;
     _driveApi = drive.DriveApi(authClient);
   }
 
