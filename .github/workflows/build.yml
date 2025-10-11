@@ -43,9 +43,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Configure Xcode project
-        run: python3 configure_xcode.py
-
       - name: Analyze code
         run: flutter analyze
 
