@@ -30,7 +30,7 @@ void callbackDispatcher() {
 
 class BackgroundService {
   Future<void> initialize() async {
-    await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+    await Workmanager().initialize(callbackDispatcher);
   }
 
   Future<void> registerBackgroundSync({
@@ -41,7 +41,7 @@ class BackgroundService {
       backgroundSyncTask,
       frequency: frequency,
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
   }
 
@@ -53,7 +53,7 @@ class BackgroundService {
       backgroundFetchTask,
       frequency: frequency,
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
   }
 

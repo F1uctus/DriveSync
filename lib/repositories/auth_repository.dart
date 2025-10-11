@@ -6,13 +6,12 @@ import 'package:http/http.dart' as http;
 import '../services/google_drive_service.dart';
 
 class AuthRepository {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: [
-      'https://www.googleapis.com/auth/drive.file',
-      'https://www.googleapis.com/auth/drive.metadata.readonly',
-    ],
-  );
+  static const List<String> _scopes = [
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/drive.metadata.readonly',
+  ];
 
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final GoogleDriveService _driveService;
 
@@ -24,39 +23,72 @@ class AuthRepository {
   bool get isSignedIn => _currentUser != null;
 
   Future<void> initialize() async {
-    _googleSignIn.onCurrentUserChanged.listen((account) {
-      _currentUser = account;
-    });
+    // Initialize GoogleSignIn
+    await _googleSignIn.initialize();
 
-    // Try to sign in silently
-    await _googleSignIn.signInSilently();
+    // Listen to authentication events
+    _googleSignIn.authenticationEvents.listen(
+      (event) {
+        switch (event) {
+          case GoogleSignInAuthenticationEventSignIn():
+            _currentUser = event.user;
+            break;
+          case GoogleSignInAuthenticationEventSignOut():
+            _currentUser = null;
+            break;
+        }
+      },
+      onError: (error) {
+        developer.log('Authentication error: $error', name: 'AuthRepository');
+      },
+    );
+
+    // Try lightweight authentication
+    try {
+      await _googleSignIn.attemptLightweightAuthentication();
+    } catch (e) {
+      developer.log('Lightweight authentication failed: $e',
+          name: 'AuthRepository');
+    }
   }
 
   Future<bool> signIn() async {
     try {
-      final account = await _googleSignIn.signIn();
-      if (account == null) return false;
+      // Use authenticate instead of signIn
+      if (_googleSignIn.supportsAuthenticate()) {
+        await _googleSignIn.authenticate();
+      } else {
+        // Fallback for platforms that don't support authenticate
+        developer.log('Platform does not support authenticate()',
+            name: 'AuthRepository');
+        return false;
+      }
 
-      _currentUser = account;
+      // Wait for authentication event to update _currentUser
+      await Future.delayed(const Duration(milliseconds: 500));
 
-      // Get auth headers and initialize Drive service
-      final authHeaders = await account.authHeaders;
+      if (_currentUser == null) return false;
+
+      // Request authorization for scopes
+      final authorization = await _currentUser!.authorizationClient
+          .authorizeScopes(_scopes);
+
+      // Initialize Drive service with auth client
       final credentials = AccessCredentials(
         AccessToken(
           'Bearer',
-          authHeaders['Authorization']!.replaceFirst('Bearer ', ''),
+          authorization.accessToken,
           DateTime.now().add(const Duration(hours: 1)),
         ),
         null,
-        [],
+        _scopes,
       );
 
       final authClient = authenticatedClient(http.Client(), credentials);
-
       await _driveService.initialize(authClient);
 
       // Save auth state
-      await _secureStorage.write(key: 'auth_email', value: account.email);
+      await _secureStorage.write(key: 'auth_email', value: _currentUser!.email);
 
       return true;
     } catch (e) {
@@ -72,21 +104,46 @@ class AuthRepository {
   }
 
   Future<AuthClient?> getAuthClient() async {
-    final account = await _googleSignIn.signInSilently();
-    if (account == null) return null;
+    if (_currentUser == null) return null;
 
-    final authHeaders = await account.authHeaders;
-    final credentials = AccessCredentials(
-      AccessToken(
-        'Bearer',
-        authHeaders['Authorization']!.replaceFirst('Bearer ', ''),
-        DateTime.now().add(const Duration(hours: 1)),
-      ),
-      null,
-      [],
-    );
+    try {
+      // Check if we already have authorization for the required scopes
+      final authorization = await _currentUser!.authorizationClient
+          .authorizationForScopes(_scopes);
 
-    return authenticatedClient(http.Client(), credentials);
+      if (authorization == null) {
+        // Need to request authorization
+        final newAuthorization = await _currentUser!.authorizationClient
+            .authorizeScopes(_scopes);
+
+        final credentials = AccessCredentials(
+          AccessToken(
+            'Bearer',
+            newAuthorization.accessToken,
+            DateTime.now().add(const Duration(hours: 1)),
+          ),
+          null,
+          _scopes,
+        );
+
+        return authenticatedClient(http.Client(), credentials);
+      }
+
+      final credentials = AccessCredentials(
+        AccessToken(
+          'Bearer',
+          authorization.accessToken,
+          DateTime.now().add(const Duration(hours: 1)),
+        ),
+        null,
+        _scopes,
+      );
+
+      return authenticatedClient(http.Client(), credentials);
+    } catch (e) {
+      developer.log('Get auth client error: $e', name: 'AuthRepository');
+      return null;
+    }
   }
 
   String? getUserEmail() {
