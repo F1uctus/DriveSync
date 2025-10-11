@@ -30,11 +30,6 @@ jobs:
           channel: "stable"
           cache: true
 
-      - name: Disable Flutter analytics and animations
-        run: |
-          flutter config --no-analytics
-          flutter config --no-cli-animations
-
       - name: Cache build outputs
         uses: actions/cache@v4
         with:
