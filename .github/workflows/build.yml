@@ -1,49 +1,69 @@
 name: Build iOS IPA
 
 on:
-    push:
-        branches: [main, master]
-    pull_request:
-        branches: [main, master]
-    workflow_dispatch:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
-    build:
-        runs-on: macos-latest
+  build:
+    runs-on: macos-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  flutter-version: "3.24.0"
-                  channel: "stable"
+      - name: Configure Git
+        run: |
+          git config --global init.defaultBranch main
+          git config --global advice.defaultBranchName false
 
-            - name: Install dependencies
-              run: flutter pub get
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.27.1"
+          channel: "stable"
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+          cache-path: "${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:"
+          pub-cache-key: "flutter-pub:os:-:channel:-:version:-:arch:-:hash:"
+          pub-cache-path: "${{ runner.os == 'Windows' && '%LOCALAPPDATA%\\Pub\\Cache' || '~/.pub-cache' }}"
 
-            - name: Configure Xcode project
-              run: python3 configure_xcode.py
+      - name: Cache build outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/
+            .dart_tool/
+          key: ${{ runner.os }}-build-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
 
-            - name: Analyze code
-              run: flutter analyze
+      - name: Install dependencies
+        run: flutter pub get
 
-            - name: Build iOS (unsigned)
-              run: |
-                  flutter build ios --release --no-codesign
+      - name: Configure Xcode project
+        run: python3 configure_xcode.py
 
-            - name: Create IPA
-              run: |
-                  cd build/ios/iphoneos
-                  mkdir -p Payload
-                  cp -r Runner.app Payload/
-                  zip -r DriveSync.ipa Payload/
+      - name: Analyze code
+        run: flutter analyze
 
-            - name: Upload IPA artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: DriveSync-iOS-unsigned
-                  path: build/ios/iphoneos/DriveSync.ipa
-                  retention-days: 30
+      - name: Build iOS (unsigned)
+        run: |
+          flutter build ios --release --no-codesign
+
+      - name: Create IPA
+        run: |
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r DriveSync.ipa Payload/
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DriveSync-iOS-unsigned
+          path: build/ios/iphoneos/DriveSync.ipa
+          retention-days: 30
