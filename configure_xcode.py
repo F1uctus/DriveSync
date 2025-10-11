@@ -49,12 +49,13 @@ def configure_xcode_project():
     
     # 2. Add entitlements file if it doesn't exist in project
     print("Configuring entitlements...")
-    entitlements_path = 'ios/Runner/Runner.entitlements'
+    entitlements_full_path = 'ios/Runner/Runner.entitlements'
+    entitlements_project_path = 'Runner/Runner.entitlements'
     
-    if os.path.exists(entitlements_path):
+    if os.path.exists(entitlements_full_path):
         # Try to add the file to project (if not already there)
         try:
-            project.add_file(entitlements_path, force=False)
+            project.add_file(entitlements_project_path, force=False)
         except:
             pass  # File might already be in project
         
@@ -63,7 +64,7 @@ def configure_xcode_project():
         if configs:
             for config in configs:
                 if hasattr(config, 'buildSettings') and config.buildSettings:
-                    config.buildSettings['CODE_SIGN_ENTITLEMENTS'] = 'Runner/Runner.entitlements'
+                    config.buildSettings['CODE_SIGN_ENTITLEMENTS'] = entitlements_project_path
                     print(f"  ✓ Set entitlements for {config.name}")
     
     # 3. Create extension entitlements file
