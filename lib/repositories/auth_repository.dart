@@ -47,8 +47,10 @@ class AuthRepository {
     try {
       await _googleSignIn.attemptLightweightAuthentication();
     } catch (e) {
-      developer.log('Lightweight authentication failed: $e',
-          name: 'AuthRepository');
+      developer.log(
+        'Lightweight authentication failed: $e',
+        name: 'AuthRepository',
+      );
     }
   }
 
@@ -59,8 +61,10 @@ class AuthRepository {
         await _googleSignIn.authenticate();
       } else {
         // Fallback for platforms that don't support authenticate
-        developer.log('Platform does not support authenticate()',
-            name: 'AuthRepository');
+        developer.log(
+          'Platform does not support authenticate()',
+          name: 'AuthRepository',
+        );
         return false;
       }
 

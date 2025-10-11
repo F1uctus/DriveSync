@@ -13,11 +13,17 @@ void callbackDispatcher() {
           // Full sync operation
           // Note: In production, this would call the sync service
           // For now, just log that background sync was triggered
-          developer.log('Background sync task executed', name: 'BackgroundService');
+          developer.log(
+            'Background sync task executed',
+            name: 'BackgroundService',
+          );
           break;
         case backgroundFetchTask:
           // Quick check for changes
-          developer.log('Background fetch task executed', name: 'BackgroundService');
+          developer.log(
+            'Background fetch task executed',
+            name: 'BackgroundService',
+          );
           break;
       }
       return Future.value(true);
@@ -41,7 +47,7 @@ class BackgroundService {
       backgroundSyncTask,
       frequency: frequency,
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+      existingWorkPolicy: ExistingWorkPolicy.replace,
     );
   }
 
@@ -53,7 +59,7 @@ class BackgroundService {
       backgroundFetchTask,
       frequency: frequency,
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+      existingWorkPolicy: ExistingWorkPolicy.replace,
     );
   }
 
