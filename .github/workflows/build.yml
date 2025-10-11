@@ -7,6 +7,9 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+env:
+  FLUTTER_SUPPRESS_ANALYTICS: true
+
 jobs:
   build:
     runs-on: macos-latest
@@ -23,13 +26,14 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.27.1"
+          flutter-version: "3.35.6"
           channel: "stable"
           cache: true
-          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
-          cache-path: "${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:"
-          pub-cache-key: "flutter-pub:os:-:channel:-:version:-:arch:-:hash:"
-          pub-cache-path: "${{ runner.os == 'Windows' && '%LOCALAPPDATA%\\Pub\\Cache' || '~/.pub-cache' }}"
+
+      - name: Disable Flutter analytics and animations
+        run: |
+          flutter config --no-analytics
+          flutter config --no-cli-animations
 
       - name: Cache build outputs
         uses: actions/cache@v4
