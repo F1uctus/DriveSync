@@ -23,23 +23,8 @@ class AuthRepository {
   GoogleSignInAccount? get currentUser => _currentUser;
   bool get isSignedIn => _currentUser != null;
 
-  Future<void> initialize() async {
-    _googleSignIn.onCurrentUserChanged.listen((account) {
-      _currentUser = account;
-    });
-
-    // Try to sign in silently
-    await _googleSignIn.signInSilently();
-  }
-
-  Future<bool> signIn() async {
+  Future<void> _initializeDriveApi(GoogleSignInAccount account) async {
     try {
-      final account = await _googleSignIn.signIn();
-      if (account == null) return false;
-
-      _currentUser = account;
-
-      // Get auth headers and initialize Drive service
       final authHeaders = await account.authHeaders;
       final credentials = AccessCredentials(
         AccessToken(
@@ -52,8 +37,40 @@ class AuthRepository {
       );
 
       final authClient = authenticatedClient(http.Client(), credentials);
-
       await _driveService.initialize(authClient);
+    } catch (e) {
+      developer.log('Error initializing Drive API: $e', name: 'AuthRepository');
+    }
+  }
+
+  Future<void> initialize() async {
+    _googleSignIn.onCurrentUserChanged.listen((account) async {
+      _currentUser = account;
+
+      // Initialize Drive API when user changes
+      if (account != null) {
+        await _initializeDriveApi(account);
+      }
+    });
+
+    // Try to sign in silently
+    final account = await _googleSignIn.signInSilently();
+
+    // Initialize Drive API if silent sign-in succeeded
+    if (account != null) {
+      await _initializeDriveApi(account);
+    }
+  }
+
+  Future<bool> signIn() async {
+    try {
+      final account = await _googleSignIn.signIn();
+      if (account == null) return false;
+
+      _currentUser = account;
+
+      // Initialize Drive service
+      await _initializeDriveApi(account);
 
       // Save auth state
       await _secureStorage.write(key: 'auth_email', value: account.email);
