@@ -47,7 +47,7 @@ class BackgroundService {
       backgroundSyncTask,
       frequency: frequency,
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
   }
 
@@ -59,7 +59,7 @@ class BackgroundService {
       backgroundFetchTask,
       frequency: frequency,
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
   }
 
