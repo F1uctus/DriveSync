@@ -5,14 +5,21 @@ import '../services/google_drive_service.dart';
 import '../services/local_file_service.dart';
 import '../services/database_service.dart';
 import '../services/sync_service.dart';
+import 'auth_repository.dart';
 
 class SyncRepository {
   final GoogleDriveService _driveService;
   final LocalFileService _localService;
   final DatabaseService _dbService;
+  final AuthRepository _authRepository;
   late final SyncService _syncService;
 
-  SyncRepository(this._driveService, this._localService, this._dbService) {
+  SyncRepository(
+    this._driveService,
+    this._localService,
+    this._dbService,
+    this._authRepository,
+  ) {
     _syncService = SyncService(_driveService, _localService, _dbService);
   }
 
@@ -44,6 +51,15 @@ class SyncRepository {
   }
 
   Future<List<DriveFile>> searchDriveFolders() async {
+    // Ensure Drive API is initialized before performing operations
+    if (!_driveService.isInitialized) {
+      final authClient = await _authRepository.getAuthClient();
+      if (authClient == null) {
+        throw Exception('Not authenticated');
+      }
+      await _driveService.initialize(authClient);
+    }
+
     return await _driveService.searchFolders();
   }
 

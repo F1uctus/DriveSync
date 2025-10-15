@@ -28,7 +28,12 @@ void main() async {
 
   // Initialize repositories
   final authRepository = AuthRepository(driveService);
-  final syncRepository = SyncRepository(driveService, localService, dbService);
+  final syncRepository = SyncRepository(
+    driveService,
+    localService,
+    dbService,
+    authRepository,
+  );
   final settingsRepository = SettingsRepository();
 
   runApp(

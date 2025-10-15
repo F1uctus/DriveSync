@@ -178,7 +178,8 @@ class GoogleDriveService {
     final fileList = await _driveApi!.files.list(
       q: query,
       spaces: 'drive',
-      $fields: 'files(id, name)',
+      $fields:
+          'files(id, name, size, modifiedTime, mimeType, md5Checksum, starred)',
     );
 
     return fileList.files?.map((f) => DriveFile.fromDriveFile(f)).toList() ??
