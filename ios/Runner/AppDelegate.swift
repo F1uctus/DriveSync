@@ -28,13 +28,6 @@ import UniformTypeIdentifiers
           result(FlutterError(code: "bookmark_failed", message: error.localizedDescription, details: nil))
         }
       case "pickDirectory":
-        // Surface via an alert toast-like message
-        let alert = UIAlertController(title: nil, message: "Opening folder picker...", preferredStyle: .alert)
-        controller.present(alert, animated: true) {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
-            alert.dismiss(animated: true, completion: nil)
-          }
-        }
         guard self.pendingResult == nil else { result(FlutterError(code: "busy", message: "Picker already active", details: nil)); return }
         self.pendingResult = result
         let picker: UIDocumentPickerViewController
@@ -46,7 +39,11 @@ import UniformTypeIdentifiers
         picker.delegate = self
         picker.allowsMultipleSelection = false
         picker.modalPresentationStyle = .formSheet
-        controller.present(picker, animated: true, completion: nil)
+        var top: UIViewController = controller
+        while let presented = top.presentedViewController { top = presented }
+        DispatchQueue.main.async {
+          top.present(picker, animated: true, completion: nil)
+        }
       case "startAccess":
         guard let args = call.arguments as? [String: Any], let data = args["bookmark"] as? FlutterStandardTypedData else {
           result(FlutterError(code: "bad_args", message: "Missing bookmark", details: nil)); return
