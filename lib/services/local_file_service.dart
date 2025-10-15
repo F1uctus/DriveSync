@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
-// We dynamically import file_selector via MethodChannel usage; to keep analyzer happy,
-// reference types conditionally at call-sites.
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 // dart:typed_data import is unnecessary; Flutter services exports Uint8List
@@ -35,12 +34,16 @@ class LocalFileService {
   Future<Map<String, String>?> pickLocalDirectory() async {
     String? directoryPath;
     try {
-      // file_selector getDirectoryPath is available when the plugin is added.
-      final MethodChannel fs = const MethodChannel(
-        'plugins.flutter.io/file_selector',
-      );
-      directoryPath = await fs.invokeMethod<String>('getDirectoryPath');
-    } catch (_) {}
+      directoryPath = await getDirectoryPath();
+    } catch (_) {
+      // Fallback to direct method channel if federated plugin isn't registered
+      try {
+        final MethodChannel fs = const MethodChannel(
+          'plugins.flutter.io/file_selector',
+        );
+        directoryPath = await fs.invokeMethod<String>('getDirectoryPath');
+      } catch (_) {}
+    }
     if (directoryPath == null) return null;
     try {
       // Create security-scoped bookmark on iOS
@@ -57,7 +60,7 @@ class LocalFileService {
                 as String;
         return {
           'path': startedPath,
-          'bookmark': String.fromCharCodes(bookmarkBytes),
+          'bookmark': base64Encode(bookmarkBytes),
           'displayName': path.basename(directoryPath),
         };
       }
