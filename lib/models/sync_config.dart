@@ -5,6 +5,8 @@ class SyncConfig extends Equatable {
   final String driveFolderId;
   final String driveFolderName;
   final String localFolderPath;
+  final String? localFolderBookmark; // iOS: security-scoped bookmark
+  final String? localFolderDisplayName; // for UI convenience
   final bool isEnabled;
   final DateTime createdAt;
   final DateTime? lastSyncedAt;
@@ -14,6 +16,8 @@ class SyncConfig extends Equatable {
     required this.driveFolderId,
     required this.driveFolderName,
     required this.localFolderPath,
+    this.localFolderBookmark,
+    this.localFolderDisplayName,
     this.isEnabled = true,
     required this.createdAt,
     this.lastSyncedAt,
@@ -25,6 +29,8 @@ class SyncConfig extends Equatable {
     driveFolderId,
     driveFolderName,
     localFolderPath,
+    localFolderBookmark,
+    localFolderDisplayName,
     isEnabled,
     createdAt,
     lastSyncedAt,
@@ -35,6 +41,8 @@ class SyncConfig extends Equatable {
     String? driveFolderId,
     String? driveFolderName,
     String? localFolderPath,
+    String? localFolderBookmark,
+    String? localFolderDisplayName,
     bool? isEnabled,
     DateTime? createdAt,
     DateTime? lastSyncedAt,
@@ -44,6 +52,9 @@ class SyncConfig extends Equatable {
       driveFolderId: driveFolderId ?? this.driveFolderId,
       driveFolderName: driveFolderName ?? this.driveFolderName,
       localFolderPath: localFolderPath ?? this.localFolderPath,
+      localFolderBookmark: localFolderBookmark ?? this.localFolderBookmark,
+      localFolderDisplayName:
+          localFolderDisplayName ?? this.localFolderDisplayName,
       isEnabled: isEnabled ?? this.isEnabled,
       createdAt: createdAt ?? this.createdAt,
       lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
@@ -56,6 +67,8 @@ class SyncConfig extends Equatable {
       'driveFolderId': driveFolderId,
       'driveFolderName': driveFolderName,
       'localFolderPath': localFolderPath,
+      'localFolderBookmark': localFolderBookmark,
+      'localFolderDisplayName': localFolderDisplayName,
       'isEnabled': isEnabled ? 1 : 0,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'lastSyncedAt': lastSyncedAt?.millisecondsSinceEpoch,
@@ -68,6 +81,8 @@ class SyncConfig extends Equatable {
       driveFolderId: json['driveFolderId'] as String,
       driveFolderName: json['driveFolderName'] as String,
       localFolderPath: json['localFolderPath'] as String,
+      localFolderBookmark: json['localFolderBookmark'] as String?,
+      localFolderDisplayName: json['localFolderDisplayName'] as String?,
       isEnabled: json['isEnabled'] == 1,
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
       lastSyncedAt: json['lastSyncedAt'] != null

@@ -22,7 +22,9 @@ class SyncService {
     yield const SyncState(operation: SyncOperation.checking);
 
     try {
-      final syncDir = await _localService.getSyncDirectory(config.id);
+      // Ensure access to user-chosen directory on iOS
+      await _localService.startAccessIfNeeded(config.localFolderBookmark);
+      final syncDir = config.localFolderPath;
       final driveFiles = await _driveService.listAllFilesRecursively(
         config.driveFolderId,
       );
@@ -133,6 +135,8 @@ class SyncService {
         operation: SyncOperation.error,
         errorMessage: e.toString(),
       );
+    } finally {
+      await _localService.stopAccessIfNeeded();
     }
   }
 

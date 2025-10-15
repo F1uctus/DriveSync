@@ -42,9 +42,7 @@ class AuthRepository {
         DateTime.now().toUtc().add(const Duration(hours: 1)),
       ),
       null,
-      [
-        'https://www.googleapis.com/auth/drive',
-      ],
+      ['https://www.googleapis.com/auth/drive'],
     );
 
     final authClient = authenticatedClient(http.Client(), credentials);
@@ -117,9 +115,7 @@ class AuthRepository {
         DateTime.now().toUtc().add(const Duration(hours: 1)),
       ),
       null,
-      [
-        'https://www.googleapis.com/auth/drive',
-      ],
+      ['https://www.googleapis.com/auth/drive'],
     );
 
     return authenticatedClient(http.Client(), credentials);

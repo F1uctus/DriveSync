@@ -15,6 +15,9 @@ class FolderSelectionScreen extends StatefulWidget {
 
 class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
   DriveFile? selectedDriveFolder;
+  String? selectedLocalFolderPath;
+  String? selectedLocalFolderBookmark;
+  String? selectedLocalFolderDisplayName;
   bool isLoading = false;
   List<DriveFile> driveFolders = [];
   final List<DriveFile> _pathStack = [];
@@ -76,13 +79,17 @@ class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
                     child: ListTile(
                       leading: const Icon(Icons.phone_iphone),
                       title: const Text('Local Storage'),
-                      subtitle: const Text('App documents folder'),
-                      enabled: false,
+                      subtitle: Text(
+                        selectedLocalFolderDisplayName ?? 'Choose a folder',
+                      ),
+                      onTap: _pickLocalFolder,
                     ),
                   ),
                   const Spacer(),
                   ElevatedButton(
-                    onPressed: selectedDriveFolder != null
+                    onPressed:
+                        selectedDriveFolder != null &&
+                            selectedLocalFolderPath != null
                         ? _createSyncConfig
                         : null,
                     style: ElevatedButton.styleFrom(
@@ -223,17 +230,44 @@ class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
   }
 
   void _createSyncConfig() {
-    if (selectedDriveFolder == null) return;
+    if (selectedDriveFolder == null || selectedLocalFolderPath == null) return;
 
     final config = SyncConfig(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       driveFolderId: selectedDriveFolder!.id,
       driveFolderName: selectedDriveFolder!.name,
-      localFolderPath: 'local_${selectedDriveFolder!.id}',
+      localFolderPath: selectedLocalFolderPath!,
+      localFolderBookmark: selectedLocalFolderBookmark,
+      localFolderDisplayName: selectedLocalFolderDisplayName,
       createdAt: DateTime.now(),
     );
 
     context.read<SyncBloc>().add(SyncAddConfig(config));
     Navigator.pop(context);
+  }
+
+  Future<void> _pickLocalFolder() async {
+    try {
+      final syncRepo = context.read<SyncRepository>();
+      final dirInfo = await syncRepo.pickLocalDirectory();
+      if (dirInfo == null) return;
+      setState(() {
+        selectedLocalFolderPath = dirInfo['path'];
+        selectedLocalFolderBookmark = dirInfo['bookmark'];
+        selectedLocalFolderDisplayName = dirInfo['displayName'];
+      });
+      final display = selectedLocalFolderDisplayName ?? 'Selected';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Selected local folder: $display')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error selecting folder: $e')));
+      }
+    }
   }
 }

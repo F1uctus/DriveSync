@@ -101,4 +101,9 @@ class SyncRepository {
   void setConflictResolution(ConflictResolution resolution) {
     _syncService.conflictResolution = resolution;
   }
+
+  // Expose local directory picker so UI doesn't reach into private fields
+  Future<Map<String, String>?> pickLocalDirectory() async {
+    return await _localService.pickLocalDirectory();
+  }
 }

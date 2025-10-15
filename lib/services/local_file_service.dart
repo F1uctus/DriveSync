@@ -1,6 +1,11 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
+// We dynamically import file_selector via MethodChannel usage; to keep analyzer happy,
+// reference types conditionally at call-sites.
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'dart:typed_data';
+import 'dart:convert';
 
 class LocalFile {
   final String path;
@@ -19,9 +24,65 @@ class LocalFile {
 }
 
 class LocalFileService {
+  static const MethodChannel _bookmarkChannel = MethodChannel(
+    'drive_sync/bookmarks',
+  );
   Future<String> getAppDocumentsPath() async {
     final directory = await getApplicationDocumentsDirectory();
     return directory.path;
+  }
+
+  Future<Map<String, String>?> pickLocalDirectory() async {
+    String? directoryPath;
+    try {
+      // file_selector getDirectoryPath is available when the plugin is added.
+      final MethodChannel fs = const MethodChannel(
+        'plugins.flutter.io/file_selector',
+      );
+      directoryPath = await fs.invokeMethod<String>('getDirectoryPath');
+    } catch (_) {}
+    if (directoryPath == null) return null;
+    try {
+      // Create security-scoped bookmark on iOS
+      if (Platform.isIOS) {
+        final bookmarkBytes =
+            await _bookmarkChannel.invokeMethod('createBookmark', {
+                  'url': 'file://' + directoryPath,
+                })
+                as Uint8List;
+        final startedPath =
+            await _bookmarkChannel.invokeMethod('startAccess', {
+                  'bookmark': bookmarkBytes,
+                })
+                as String;
+        return {
+          'path': startedPath,
+          'bookmark': String.fromCharCodes(bookmarkBytes),
+          'displayName': path.basename(directoryPath),
+        };
+      }
+    } catch (_) {
+      // Fall back to path only
+    }
+    return {'path': directoryPath, 'displayName': path.basename(directoryPath)};
+  }
+
+  Future<void> startAccessIfNeeded(String? bookmarkBase64) async {
+    if (!Platform.isIOS) return;
+    if (bookmarkBase64 == null) return;
+    try {
+      final MethodChannel ch = const MethodChannel('drive_sync/bookmarks');
+      final bytes = Uint8List.fromList(base64.decode(bookmarkBase64));
+      await ch.invokeMethod('startAccess', {'bookmark': bytes});
+    } catch (_) {}
+  }
+
+  Future<void> stopAccessIfNeeded() async {
+    if (!Platform.isIOS) return;
+    try {
+      final MethodChannel ch = const MethodChannel('drive_sync/bookmarks');
+      await ch.invokeMethod('stopAccess');
+    } catch (_) {}
   }
 
   Future<String> getSyncDirectory(String syncConfigId) async {

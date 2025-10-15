@@ -16,7 +16,12 @@ class DatabaseService {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'drive_sync.db');
 
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -26,6 +31,8 @@ class DatabaseService {
         driveFolderId TEXT NOT NULL,
         driveFolderName TEXT NOT NULL,
         localFolderPath TEXT NOT NULL,
+        localFolderBookmark TEXT,
+        localFolderDisplayName TEXT,
         isEnabled INTEGER NOT NULL,
         createdAt INTEGER NOT NULL,
         lastSyncedAt INTEGER
@@ -54,6 +61,17 @@ class DatabaseService {
     await db.execute('''
       CREATE INDEX idx_sync_config ON file_metadata(syncConfigId)
     ''');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        'ALTER TABLE sync_configs ADD COLUMN localFolderBookmark TEXT',
+      );
+      await db.execute(
+        'ALTER TABLE sync_configs ADD COLUMN localFolderDisplayName TEXT',
+      );
+    }
   }
 
   Future<void> insertSyncConfig(SyncConfig config) async {
