@@ -4,7 +4,7 @@ import 'package:path/path.dart' as path;
 // reference types conditionally at call-sites.
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:typed_data';
+// dart:typed_data import is unnecessary; Flutter services exports Uint8List
 import 'dart:convert';
 
 class LocalFile {
@@ -47,7 +47,7 @@ class LocalFileService {
       if (Platform.isIOS) {
         final bookmarkBytes =
             await _bookmarkChannel.invokeMethod('createBookmark', {
-                  'url': 'file://' + directoryPath,
+                  'url': 'file://$directoryPath',
                 })
                 as Uint8List;
         final startedPath =
