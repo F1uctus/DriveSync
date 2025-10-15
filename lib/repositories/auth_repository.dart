@@ -8,8 +8,8 @@ import '../services/google_drive_service.dart';
 class AuthRepository {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [
-      'https://www.googleapis.com/auth/drive.file',
-      'https://www.googleapis.com/auth/drive.metadata.readonly',
+      // Full Drive access to allow reading existing user files for selected folders
+      'https://www.googleapis.com/auth/drive',
     ],
   );
 
@@ -43,8 +43,7 @@ class AuthRepository {
       ),
       null,
       [
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/drive.metadata.readonly',
+        'https://www.googleapis.com/auth/drive',
       ],
     );
 
@@ -119,8 +118,7 @@ class AuthRepository {
       ),
       null,
       [
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/drive.metadata.readonly',
+        'https://www.googleapis.com/auth/drive',
       ],
     );
 

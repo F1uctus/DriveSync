@@ -19,64 +19,91 @@ class FolderPairTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        leading: Icon(
-          Icons.folder_outlined,
-          color: config.isEnabled ? Colors.blue : Colors.grey,
-        ),
-        title: Text(config.driveFolderName),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.cloud, size: 14),
-                const SizedBox(width: 4),
-                const Expanded(
-                  child: Text('Google Drive', style: TextStyle(fontSize: 12)),
-                ),
-              ],
+            Icon(
+              Icons.folder_outlined,
+              color: config.isEnabled ? Colors.blue : Colors.grey,
             ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                const Icon(Icons.phone_iphone, size: 14),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    'Local Storage',
-                    style: const TextStyle(fontSize: 12),
+            const SizedBox(width: 12),
+            // Name column
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    config.driveFolderName,
+                    style: Theme.of(context).textTheme.titleMedium,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (config.lastSyncedAt != null)
+                    Text(
+                      'Last synced: ${_formatDateTime(config.lastSyncedAt!)}',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Drive column
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: const [
+                  Icon(Icons.cloud, size: 16),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Google Drive',
+                      style: TextStyle(fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Local column
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: const [
+                  Icon(Icons.phone_iphone, size: 16),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Local Storage',
+                      style: TextStyle(fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Actions
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.sync),
+                  onPressed: config.isEnabled ? onSync : null,
+                  tooltip: 'Sync now',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: onDelete,
+                  tooltip: 'Delete',
                 ),
               ],
             ),
-            if (config.lastSyncedAt != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Last synced: ${_formatDateTime(config.lastSyncedAt!)}',
-                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-              ),
-            ],
           ],
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.sync),
-              onPressed: config.isEnabled ? onSync : null,
-              tooltip: 'Sync now',
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: onDelete,
-              tooltip: 'Delete',
-            ),
-          ],
-        ),
-        onTap: onTap,
       ),
     );
   }

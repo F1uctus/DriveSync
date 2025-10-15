@@ -53,6 +53,8 @@ class GoogleDriveService {
     final fileList = await _driveApi!.files.list(
       q: query,
       spaces: 'drive',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true,
       $fields:
           'files(id, name, size, modifiedTime, mimeType, md5Checksum, starred)',
     );
@@ -86,6 +88,7 @@ class GoogleDriveService {
     final drive.Media? media =
         await _driveApi!.files.get(
               fileId,
+              supportsAllDrives: true,
               downloadOptions: drive.DownloadOptions.fullMedia,
             )
             as drive.Media?;
@@ -130,12 +133,17 @@ class GoogleDriveService {
     final file = File(localPath);
     final media = drive.Media(file.openRead(), file.lengthSync());
 
-    await _driveApi!.files.update(drive.File(), fileId, uploadMedia: media);
+    await _driveApi!.files.update(
+      drive.File(),
+      fileId,
+      uploadMedia: media,
+      supportsAllDrives: true,
+    );
   }
 
   Future<void> deleteFile(String fileId) async {
     if (_driveApi == null) throw Exception('Drive API not initialized');
-    await _driveApi!.files.delete(fileId);
+    await _driveApi!.files.delete(fileId, supportsAllDrives: true);
   }
 
   Future<String> createFolder(String folderName, String parentFolderId) async {
@@ -146,7 +154,10 @@ class GoogleDriveService {
       ..mimeType = 'application/vnd.google-apps.folder'
       ..parents = [parentFolderId];
 
-    final createdFolder = await _driveApi!.files.create(folder);
+    final createdFolder = await _driveApi!.files.create(
+      folder,
+      supportsAllDrives: true,
+    );
     return createdFolder.id!;
   }
 
@@ -156,6 +167,7 @@ class GoogleDriveService {
     final file =
         await _driveApi!.files.get(
               fileId,
+              supportsAllDrives: true,
               $fields:
                   'id, name, size, modifiedTime, mimeType, md5Checksum, starred',
             )
@@ -167,7 +179,11 @@ class GoogleDriveService {
   Future<void> setFileFavorite(String fileId, bool starred) async {
     if (_driveApi == null) throw Exception('Drive API not initialized');
 
-    await _driveApi!.files.update(drive.File()..starred = starred, fileId);
+    await _driveApi!.files.update(
+      drive.File()..starred = starred,
+      fileId,
+      supportsAllDrives: true,
+    );
   }
 
   Future<List<DriveFile>> searchFolders() async {
@@ -178,6 +194,8 @@ class GoogleDriveService {
     final fileList = await _driveApi!.files.list(
       q: query,
       spaces: 'drive',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true,
       $fields:
           'files(id, name, size, modifiedTime, mimeType, md5Checksum, starred)',
     );
@@ -194,6 +212,8 @@ class GoogleDriveService {
     final fileList = await _driveApi!.files.list(
       q: query,
       spaces: 'drive',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true,
       $fields:
           'files(id, name, size, modifiedTime, mimeType, md5Checksum, starred)',
     );
@@ -212,6 +232,8 @@ class GoogleDriveService {
     final fileList = await _driveApi!.files.list(
       q: query,
       spaces: 'drive',
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true,
       $fields:
           'files(id, name, size, modifiedTime, mimeType, md5Checksum, starred)',
     );
