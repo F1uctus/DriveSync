@@ -28,6 +28,13 @@ import UniformTypeIdentifiers
           result(FlutterError(code: "bookmark_failed", message: error.localizedDescription, details: nil))
         }
       case "pickDirectory":
+        // Surface via an alert toast-like message
+        let alert = UIAlertController(title: nil, message: "Opening folder picker...", preferredStyle: .alert)
+        controller.present(alert, animated: true) {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            alert.dismiss(animated: true, completion: nil)
+          }
+        }
         guard self.pendingResult == nil else { result(FlutterError(code: "busy", message: "Picker already active", details: nil)); return }
         self.pendingResult = result
         let picker: UIDocumentPickerViewController

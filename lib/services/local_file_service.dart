@@ -3,6 +3,7 @@ import 'package:path/path.dart' as path;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:drive_sync/services/error_reporter.dart';
 // dart:typed_data import is unnecessary; Flutter services exports Uint8List
 import 'dart:convert';
 
@@ -32,12 +33,46 @@ class LocalFileService {
   }
 
   Future<Map<String, String>?> pickLocalDirectory() async {
+    // iOS: prefer native picker that returns a bookmark
+    if (Platform.isIOS) {
+      try {
+        // Debug
+        // also toast for visibility on device
+        // ignore: avoid_print
+        print('[LocalFileService] Invoking native pickDirectory');
+        final result =
+            await _bookmarkChannel.invokeMethod('pickDirectory') as Map?;
+        if (result != null) {
+          final pathStr = result['path'] as String;
+          final bookmarkBytes = result['bookmark'] as Uint8List;
+          // Debug
+          // ignore: avoid_print
+          print('[LocalFileService] Native picker returned: $pathStr');
+          return {
+            'path': pathStr,
+            'bookmark': base64Encode(bookmarkBytes),
+            'displayName': path.basename(pathStr),
+          };
+        }
+      } catch (e) {
+        // Surface unexpected behaviour
+        // ignore: use_build_context_synchronously
+        await ErrorReporter.showToast('Picker error (iOS): $e');
+      }
+    }
+
     String? directoryPath;
     try {
+      // Debug
+      // ignore: avoid_print
+      print('[LocalFileService] Using file_selector getDirectoryPath');
       directoryPath = await getDirectoryPath();
     } catch (_) {
       // Fallback to direct method channel if federated plugin isn't registered
       try {
+        // Debug
+        // ignore: avoid_print
+        print('[LocalFileService] Fallback to method channel file_selector');
         final MethodChannel fs = const MethodChannel(
           'plugins.flutter.io/file_selector',
         );
@@ -48,6 +83,9 @@ class LocalFileService {
     try {
       // Create security-scoped bookmark on iOS
       if (Platform.isIOS) {
+        // Debug
+        // ignore: avoid_print
+        print('[LocalFileService] Creating bookmark for file://$directoryPath');
         final bookmarkBytes =
             await _bookmarkChannel.invokeMethod('createBookmark', {
                   'url': 'file://$directoryPath',
@@ -58,15 +96,21 @@ class LocalFileService {
                   'bookmark': bookmarkBytes,
                 })
                 as String;
+        // Debug
+        // ignore: avoid_print
+        print('[LocalFileService] startAccess returned path: $startedPath');
         return {
           'path': startedPath,
           'bookmark': base64Encode(bookmarkBytes),
           'displayName': path.basename(directoryPath),
         };
       }
-    } catch (_) {
-      // Fall back to path only
+    } catch (e) {
+      await ErrorReporter.showToast('Bookmark error: $e');
     }
+    // Debug
+    // ignore: avoid_print
+    print('[LocalFileService] Returning plain path: $directoryPath');
     return {'path': directoryPath, 'displayName': path.basename(directoryPath)};
   }
 

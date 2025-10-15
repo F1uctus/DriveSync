@@ -79,6 +79,7 @@ class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
                       subtitle: Text(
                         selectedLocalFolderDisplayName ?? 'Choose a folder',
                       ),
+                      enabled: true,
                       onTap: _pickLocalFolder,
                     ),
                   ),
@@ -245,6 +246,14 @@ class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
 
   Future<void> _pickLocalFolder() async {
     try {
+      // Debug: indicate tap was received
+      // ignore: avoid_print
+      print('[UI] Local Storage tile tapped → opening picker');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Opening local folder picker...')),
+        );
+      }
       final syncRepo = context.read<SyncRepository>();
       final dirInfo = await syncRepo.pickLocalDirectory();
       if (dirInfo == null) return;
@@ -253,6 +262,9 @@ class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
         selectedLocalFolderBookmark = dirInfo['bookmark'];
         selectedLocalFolderDisplayName = dirInfo['displayName'];
       });
+      // Debug: chosen folder
+      // ignore: avoid_print
+      print('[UI] Local folder selected: $selectedLocalFolderPath');
       final display = selectedLocalFolderDisplayName ?? 'Selected';
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -34,4 +34,12 @@ class ErrorReporter {
       },
     );
   }
+
+  static Future<void> showToast(String message) async {
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 }
