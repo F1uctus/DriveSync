@@ -1,6 +1,5 @@
 import Flutter
 import UIKit
-import UniformTypeIdentifiers
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -21,7 +20,7 @@ import UniformTypeIdentifiers
           result(FlutterError(code: "bad_args", message: "Missing url", details: nil)); return
         }
         do {
-          let bookmark = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+          let bookmark = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
           result(FlutterStandardTypedData(bytes: bookmark))
         } catch {
           result(FlutterError(code: "bookmark_failed", message: error.localizedDescription, details: nil))
@@ -32,7 +31,7 @@ import UniformTypeIdentifiers
         }
         var isStale = false
         do {
-          let url = try URL(resolvingBookmarkData: data.data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+          let url = try URL(resolvingBookmarkData: data.data, options: [], relativeTo: nil, bookmarkDataIsStale: &isStale)
           if url.startAccessingSecurityScopedResource() {
             result(url.path)
           } else {
