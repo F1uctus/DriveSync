@@ -13,7 +13,9 @@ import 'services/google_drive_service.dart';
 import 'services/local_file_service.dart';
 import 'services/database_service.dart';
 import 'services/background_service.dart';
+import 'services/error_reporter.dart';
 import 'screens/home_screen.dart';
+import 'dart:async';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,13 +38,27 @@ void main() async {
   );
   final settingsRepository = SettingsRepository();
 
-  runApp(
-    DriveSyncApp(
-      authRepository: authRepository,
-      syncRepository: syncRepository,
-      settingsRepository: settingsRepository,
-      backgroundService: backgroundService,
-    ),
+  FlutterError.onError = (FlutterErrorDetails details) {
+    Zone.current.handleUncaughtError(
+      details.exception,
+      details.stack ?? StackTrace.current,
+    );
+  };
+
+  runZonedGuarded(
+    () {
+      runApp(
+        DriveSyncApp(
+          authRepository: authRepository,
+          syncRepository: syncRepository,
+          settingsRepository: settingsRepository,
+          backgroundService: backgroundService,
+        ),
+      );
+    },
+    (error, stack) async {
+      await ErrorReporter.showError('Unexpected error', error, stack);
+    },
   );
 }
 
@@ -88,6 +104,7 @@ class DriveSyncApp extends StatelessWidget {
           ),
         ],
         child: MaterialApp(
+          navigatorKey: ErrorReporter.navigatorKey,
           title: 'Drive Sync',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(

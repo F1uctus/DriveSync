@@ -5,6 +5,7 @@ import '../blocs/sync/sync_event.dart';
 import '../models/sync_config.dart';
 import '../services/google_drive_service.dart';
 import '../repositories/sync_repository.dart';
+import '../services/error_reporter.dart';
 
 class FolderSelectionScreen extends StatefulWidget {
   const FolderSelectionScreen({super.key});
@@ -42,13 +43,9 @@ class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
         driveFolders = folders;
         isLoading = false;
       });
-    } catch (e) {
+    } catch (e, st) {
       setState(() => isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading folders: $e')));
-      }
+      await ErrorReporter.showError('Error loading Drive folders', e, st);
     }
   }
 
@@ -262,12 +259,8 @@ class _FolderSelectionScreenState extends State<FolderSelectionScreen> {
           SnackBar(content: Text('Selected local folder: $display')),
         );
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error selecting folder: $e')));
-      }
+    } catch (e, st) {
+      await ErrorReporter.showError('Error selecting local folder', e, st);
     }
   }
 }

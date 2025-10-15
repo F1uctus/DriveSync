@@ -1,8 +1,10 @@
 import Flutter
 import UIKit
+import UniformTypeIdentifiers
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, UIDocumentPickerDelegate {
+  private var pendingResult: FlutterResult?
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -25,6 +27,19 @@ import UIKit
         } catch {
           result(FlutterError(code: "bookmark_failed", message: error.localizedDescription, details: nil))
         }
+      case "pickDirectory":
+        guard self.pendingResult == nil else { result(FlutterError(code: "busy", message: "Picker already active", details: nil)); return }
+        self.pendingResult = result
+        let picker: UIDocumentPickerViewController
+        if #available(iOS 14.0, *) {
+          picker = UIDocumentPickerViewController(forOpeningContentTypes: [UTType.folder])
+        } else {
+          picker = UIDocumentPickerViewController(documentTypes: ["public.folder"], in: .open)
+        }
+        picker.delegate = self
+        picker.allowsMultipleSelection = false
+        picker.modalPresentationStyle = .formSheet
+        controller.present(picker, animated: true, completion: nil)
       case "startAccess":
         guard let args = call.arguments as? [String: Any], let data = args["bookmark"] as? FlutterStandardTypedData else {
           result(FlutterError(code: "bad_args", message: "Missing bookmark", details: nil)); return
@@ -48,5 +63,26 @@ import UIKit
       }
     }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // MARK: - UIDocumentPickerDelegate
+  func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+    pendingResult?(FlutterError(code: "cancelled", message: "User cancelled", details: nil))
+    pendingResult = nil
+  }
+
+  func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+    guard let result = pendingResult else { return }
+    pendingResult = nil
+    guard let url = urls.first else {
+      result(FlutterError(code: "no_selection", message: "No folder selected", details: nil)); return
+    }
+    do {
+      let bookmark = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+      _ = url.startAccessingSecurityScopedResource()
+      result(["path": url.path, "bookmark": FlutterStandardTypedData(bytes: bookmark)])
+    } catch {
+      result(FlutterError(code: "bookmark_failed", message: error.localizedDescription, details: nil))
+    }
   }
 }
