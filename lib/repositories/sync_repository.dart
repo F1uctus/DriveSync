@@ -63,6 +63,30 @@ class SyncRepository {
     return await _driveService.searchFolders();
   }
 
+  Future<List<DriveFile>> listDriveSubFolders(String parentFolderId) async {
+    if (!_driveService.isInitialized) {
+      final authClient = await _authRepository.getAuthClient();
+      if (authClient == null) {
+        throw Exception('Not authenticated');
+      }
+      await _driveService.initialize(authClient);
+    }
+
+    return await _driveService.listSubFolders(parentFolderId);
+  }
+
+  Future<List<DriveFile>> searchDriveFoldersByName(String query) async {
+    if (!_driveService.isInitialized) {
+      final authClient = await _authRepository.getAuthClient();
+      if (authClient == null) {
+        throw Exception('Not authenticated');
+      }
+      await _driveService.initialize(authClient);
+    }
+
+    return await _driveService.searchFoldersByName(query);
+  }
+
   Future<int> getStorageUsed() async {
     final basePath = await _localService.getAppDocumentsPath();
     return await _localService.getDirectorySize(basePath);

@@ -185,4 +185,38 @@ class GoogleDriveService {
     return fileList.files?.map((f) => DriveFile.fromDriveFile(f)).toList() ??
         [];
   }
+
+  Future<List<DriveFile>> listSubFolders(String parentFolderId) async {
+    if (_driveApi == null) throw Exception('Drive API not initialized');
+
+    final query =
+        "mimeType='application/vnd.google-apps.folder' and trashed = false and '$parentFolderId' in parents";
+    final fileList = await _driveApi!.files.list(
+      q: query,
+      spaces: 'drive',
+      $fields:
+          'files(id, name, size, modifiedTime, mimeType, md5Checksum, starred)',
+    );
+
+    return fileList.files?.map((f) => DriveFile.fromDriveFile(f)).toList() ??
+        [];
+  }
+
+  Future<List<DriveFile>> searchFoldersByName(String nameQuery) async {
+    if (_driveApi == null) throw Exception('Drive API not initialized');
+
+    // Full-text name search; escape single quotes in query
+    final safe = nameQuery.replaceAll("'", "\\'");
+    final query =
+        "mimeType='application/vnd.google-apps.folder' and trashed = false and name contains '$safe'";
+    final fileList = await _driveApi!.files.list(
+      q: query,
+      spaces: 'drive',
+      $fields:
+          'files(id, name, size, modifiedTime, mimeType, md5Checksum, starred)',
+    );
+
+    return fileList.files?.map((f) => DriveFile.fromDriveFile(f)).toList() ??
+        [];
+  }
 }
