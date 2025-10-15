@@ -22,43 +22,59 @@ class AuthRepository {
 
   GoogleSignInAccount? get currentUser => _currentUser;
   bool get isSignedIn => _currentUser != null;
+  bool get isDriveApiInitialized => _driveService.isInitialized;
 
   Future<void> _initializeDriveApi(GoogleSignInAccount account) async {
-    try {
-      final authHeaders = await account.authHeaders;
-      final credentials = AccessCredentials(
-        AccessToken(
-          'Bearer',
-          authHeaders['Authorization']!.replaceFirst('Bearer ', ''),
-          DateTime.now().add(const Duration(hours: 1)),
-        ),
-        null,
-        [],
-      );
+    developer.log(
+      'Initializing Drive API for ${account.email}',
+      name: 'AuthRepository',
+    );
 
-      final authClient = authenticatedClient(http.Client(), credentials);
-      await _driveService.initialize(authClient);
-    } catch (e) {
-      developer.log('Error initializing Drive API: $e', name: 'AuthRepository');
+    final authHeaders = await account.authHeaders;
+    if (authHeaders['Authorization'] == null) {
+      throw Exception('No authorization header available');
     }
+
+    final credentials = AccessCredentials(
+      AccessToken(
+        'Bearer',
+        authHeaders['Authorization']!.replaceFirst('Bearer ', ''),
+        DateTime.now().add(const Duration(hours: 1)),
+      ),
+      null,
+      [
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive.metadata.readonly',
+      ],
+    );
+
+    final authClient = authenticatedClient(http.Client(), credentials);
+    await _driveService.initialize(authClient);
+
+    developer.log(
+      'Drive API initialized successfully for ${account.email}',
+      name: 'AuthRepository',
+    );
   }
 
   Future<void> initialize() async {
-    _googleSignIn.onCurrentUserChanged.listen((account) async {
+    // Just update the current user reference
+    _googleSignIn.onCurrentUserChanged.listen((account) {
       _currentUser = account;
-
-      // Initialize Drive API when user changes
-      if (account != null) {
-        await _initializeDriveApi(account);
-      }
     });
 
-    // Try to sign in silently
-    final account = await _googleSignIn.signInSilently();
+    try {
+      // Try to sign in silently
+      final account = await _googleSignIn.signInSilently();
 
-    // Initialize Drive API if silent sign-in succeeded
-    if (account != null) {
-      await _initializeDriveApi(account);
+      // Initialize Drive API if silent sign-in succeeded
+      if (account != null) {
+        _currentUser = account;
+        await _initializeDriveApi(account);
+      }
+    } catch (e) {
+      developer.log('Silent sign in error: $e', name: 'AuthRepository');
+      _currentUser = null;
     }
   }
 
@@ -93,6 +109,8 @@ class AuthRepository {
     if (account == null) return null;
 
     final authHeaders = await account.authHeaders;
+    if (authHeaders['Authorization'] == null) return null;
+
     final credentials = AccessCredentials(
       AccessToken(
         'Bearer',
@@ -100,7 +118,10 @@ class AuthRepository {
         DateTime.now().add(const Duration(hours: 1)),
       ),
       null,
-      [],
+      [
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive.metadata.readonly',
+      ],
     );
 
     return authenticatedClient(http.Client(), credentials);
