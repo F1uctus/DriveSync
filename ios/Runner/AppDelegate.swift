@@ -32,7 +32,7 @@ import UniformTypeIdentifiers
         self.pendingResult = result
         let picker: UIDocumentPickerViewController
         if #available(iOS 14.0, *) {
-          picker = UIDocumentPickerViewController(forOpeningContentTypes: [UTType.folder])
+          picker = UIDocumentPickerViewController(forOpeningContentTypes: [UTType.folder], asCopy: false)
         } else {
           picker = UIDocumentPickerViewController(documentTypes: ["public.folder"], in: .open)
         }
